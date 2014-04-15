@@ -1,0 +1,61 @@
+body {
+	font-family:Verdana;
+	background-color:#C0C0C0;
+}
+
+div {
+	display:inline-block;
+}
+
+form {
+	margin-top:10px;
+	text-align:center;
+}
+
+table {
+	border-collapse:collapse;
+	text-align:center;
+	margin-top:20px;
+	margin-left:50px;
+	margin-right:50px;
+	margin-bottom:10px;
+}
+
+.tagy {
+	margin-left:120px;
+	margin-right:120px;
+} 
+
+.money {
+	text-align:right;
+}
+
+.ordinary {
+	background-color:#707070;
+}
+
+.left {
+	background-color:#339966;
+}
+
+.spent {
+	background-color:#CC3333;
+}
+
+.david {
+	background-color:#9966FF;
+}
+
+.lenka {
+	background-color:#CC33CC;
+}
+
+.spolecne {
+	background-color:#FFCC33;
+}
+
+.cell {
+	color:#F8F8F8;
+	padding: 4px;
+	border:5px solid white;
+}
