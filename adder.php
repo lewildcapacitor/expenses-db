@@ -189,7 +189,7 @@ $lastAddedItems = dibi::query("(
 	<div>
 	<table class="lastitems">
 		<thead>
-			<th colspan="3">Poslední přídané položky:</th>
+			<th colspan="3">Poslední přidané položky:</th>
 		</thead>
 		<tbody>
 		<?php foreach($lastAddedItems as $id => $item) {?>
