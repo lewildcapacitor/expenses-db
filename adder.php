@@ -50,7 +50,7 @@ if($submitted)
 }
 
 //stat part
-$firstDayThisMonth = date('Y-m-01'); 
+$firstDayThisMonth = date('Y-m-01');
 $lastDayThisMonth  = date('Y-m-t');
 
 $sumsRent = dibi::query("
@@ -143,7 +143,6 @@ $lastAddedItems = dibi::query("(
 </head>
 <body onload="fillDate();">
 	<div>
-<!-- 	<?php if($submitted) { ?><span class="msg">Přidána položka '<?php echo htmlspecialchars($_POST['name'], ENT_QUOTES, 'UTF-8'); ?>'.</span><?php } ?> -->
 	<table>
 		<thead>
 			<tr>
@@ -194,7 +193,7 @@ $lastAddedItems = dibi::query("(
 		<tbody>
 		<?php foreach($lastAddedItems as $id => $item) {?>
 			<tr class="<?php echo $item->zdroj;?>">
-			<!-- 
+			<!--
 <?php foreach($item as $key => $value) {?>
 				<tr>
 					<?php echo $value; ?>
@@ -219,7 +218,7 @@ $lastAddedItems = dibi::query("(
 		Položka: <input type="text" id="name" name="name" placeholder="řekni, co se pořídilo" /><br/>
 		Cena:<br/>
 		za kus * počet jednotek [jednotka] = celkově<br/>
-		<input type="text" id="peritem" name="peritem" onchange="updateTotal();" placeholder="za kus" /> x 
+		<input type="text" id="peritem" name="peritem" onchange="updateTotal();" placeholder="za kus" /> x
 		<input type="text" id="amount" name="amount" value="1" onchange="updateTotal();" placeholder="počet jednotek" />
 		[
 		<select name="unit">
@@ -228,7 +227,7 @@ $lastAddedItems = dibi::query("(
 			<option value="l">l</option>
 		</select>
 		]
-		= 
+		=
 		<input type="text" id="total" name="total" onchange="updatePerItem();" placeholder="celkem" />
 		<select name="source">
 			<option value="lenka">Uň (L)</option>
