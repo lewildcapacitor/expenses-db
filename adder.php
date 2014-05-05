@@ -250,5 +250,7 @@ $lastAddedItems = dibi::query("(
 		</div>
 		<input type="submit" id="submit" name="submit" value="Add"/>
 	</form>
+	
+	<div><a href="statistics.php">Statistika</a></div>
 </body>
 </html>
