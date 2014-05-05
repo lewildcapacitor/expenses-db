@@ -243,7 +243,7 @@ $lastAddedItems = dibi::query("(
 			{
 				$aux = $tag->nazev;
 		?>
-				<input type="checkbox" name="tag[]" value="<?php echo $aux;?>"/><?php echo $aux;?>
+				<div style="display: inline-block;"><input type="checkbox" name="tag[]" value="<?php echo $aux;?>"/><?php echo $aux;?></div>
 		<?php } ?>
 			<br/><br/>
 		<?php } ?>
