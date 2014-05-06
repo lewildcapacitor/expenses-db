@@ -58,7 +58,9 @@ $sumsRent = dibi::query("
 	FROM `polozka`
 	JOIN `polozka_tag` ON `polozka`.`id` = `polozka_tag`.`polozka`
 	JOIN `tag` ON `polozka_tag`.`tag` = `tag`.`id`
-	WHERE `tag`.`nazev` = 'ubytovani'
+	WHERE TRUE
+		AND `tag`.`nazev` = 'ubytovani'
+		AND %d", $firstDayThisMonth, " <= `polozka`.`datum_zakoupeni` AND  `polozka`.`datum_zakoupeni` <= %d", $lastDayThisMonth, "
 	GROUP BY `polozka`.`zdroj`
 ")->fetchPairs('zdroj', 'suma');
 $sumsExtra = dibi::query("
@@ -66,12 +68,16 @@ $sumsExtra = dibi::query("
 	FROM `polozka`
 	JOIN `polozka_tag` ON `polozka`.`id` = `polozka_tag`.`polozka`
 	JOIN `tag` ON `polozka_tag`.`tag` = `tag`.`id`
-	WHERE `tag`.`nazev` = 'mimoradne (rocni)'
+	WHERE TRUE
+		AND `tag`.`nazev` = 'mimoradne (rocni)'
+		AND %d", $firstDayThisMonth, " <= `polozka`.`datum_zakoupeni` AND  `polozka`.`datum_zakoupeni` <= %d", $lastDayThisMonth, "
 	GROUP BY `polozka`.`zdroj`
 ")->fetchPairs('zdroj', 'suma');
 $sums = dibi::query("
 	SELECT `polozka`.`zdroj`, SUM(`polozka`.`cena`) AS `suma`
 	FROM `polozka`
+	WHERE TRUE
+		AND %d", $firstDayThisMonth, " <= `polozka`.`datum_zakoupeni` AND  `polozka`.`datum_zakoupeni` <= %d", $lastDayThisMonth, "
 	GROUP BY `polozka`.`zdroj`
 ")->fetchPairs('zdroj', 'suma');
 
