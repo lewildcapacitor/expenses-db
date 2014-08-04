@@ -19,15 +19,20 @@ dibi::connect($dbOptions);
 session_start();
 
 $categories = dibi::query("SELECT `nazev`, `id_kategorie` FROM `tag`")->fetchAssoc('id_kategorie,#');
+$use = dibi::query("SELECT `id`, `nazev` FROM `ucel`")->fetchAssoc('id');
+$location = dibi::query("SELECT `id`, `nazev` FROM `misto`")->fetchAssoc('id');
+
 
 $submitted = isset($_POST['submit']);
 if($submitted)
 {
 	//zdlouhave pridavani do db
 	dibi::query("
-		INSERT INTO `polozka` (`nazev`, `datum_zakoupeni`, `jednotkova_cena`, `pocet_kusu`, `jednotka`, `cena`, `zdroj`, `datum_vlozeni`)
-		VALUES (%s, %d, %f, %f, %s, %f, %s, %d)
-		", $_POST['name'], $_POST['datum'], $_POST['peritem'], $_POST['amount'], $_POST['unit'], $_POST['total'], $_POST['source'], time(), "
+		INSERT INTO `polozka` (`nazev`, `datum_zakoupeni`, `jednotkova_cena`, `pocet_kusu`, `jednotka`, `cena`, `zdroj`,
+							   `datum_vlozeni`, `ucel`, `misto_nakupu`, `je_rocni`)
+		VALUES (%s, %d, %f, %f, %s, %f, %s, %d, %i, %i, %b)
+		", $_POST['name'], $_POST['datum'], $_POST['peritem'], $_POST['amount'], $_POST['unit'], $_POST['total'], $_POST['source'], time(), 
+		   $_POST['ucel'], $_POST['lokace'], isset($_POST['rocni']), "
 	");
 	$itemId = dibi::getInsertId();
 	
@@ -41,11 +46,6 @@ if($submitted)
 		");
 	}
 	
-	/*foreach($_POST['tag'] as $tag)
-	{
-		$tagId = dibi::fetchSingle("SELECT `id` FROM `tag` WHERE `nazev` = %s", $tag);
-		dibi::query("INSERT INTO `polozka_tag` VALUES (%i, %i)", $itemId, $tagId);
-	}*/
 	$_SESSION['date'] = $_POST['datum'];
 }
 
@@ -125,6 +125,20 @@ $lastAddedItems = dibi::query("(
 	<link rel="stylesheet" href="style/style.css">
 	<script type="text/javascript" src="script/cookies.js"></script>
 	<script type="text/javascript">
+	window.onload = function()
+	{
+		var element = document.getElementsByName("ucel")[0];
+		var block = document.getElementById("category2");
+		element.onchange = function(){
+			if(element.selectedIndex == 1){
+				block.style.display = "block";
+			}
+			else {
+				block.style.display = "none";
+			}
+		};
+		element.onchange();
+	}
 	function fillDate() {
 		if(navigator.cookieEnabled) {
 			var lastShoppingDate = readCookie("lastshoppingdate");
@@ -220,12 +234,12 @@ $lastAddedItems = dibi::query("(
 	</div>
 	
 	<form action="adder.php" method="POST">
-		Datum: <input type="date" id="datum" name="datum" value="<?php echo set_date(); ?>" placeholder="datum nákupu" /><br/>
-		Položka: <input type="text" id="name" name="name" placeholder="řekni, co se pořídilo" /><br/>
+		Datum: <input type="date" id="datum" name="datum" value="<?php echo set_date(); ?>" placeholder="datum nákupu" required="required"/><br/>
+		Položka: <input type="text" id="name" name="name" placeholder="řekni, co se pořídilo" required="required"/><br/>
 		Cena:<br/>
 		za kus * počet jednotek [jednotka] = celkově<br/>
-		<input type="text" id="peritem" name="peritem" onchange="updateTotal();" placeholder="za kus" /> x
-		<input type="text" id="amount" name="amount" value="1" onchange="updateTotal();" placeholder="počet jednotek" />
+		<input type="text" id="peritem" name="peritem" onchange="updateTotal();" placeholder="za kus" required="required" /> x
+		<input type="text" id="amount" name="amount" value="1" onchange="updateTotal();" placeholder="počet jednotek" required="required" />
 		[
 		<select name="unit">
 			<option value="ks">ks</option>
@@ -235,22 +249,45 @@ $lastAddedItems = dibi::query("(
 		]
 		=
 		<input type="text" id="total" name="total" onchange="updatePerItem();" placeholder="celkem" />
-		<select name="source">
+		<select name="source" required="required">
+			<option value=""></option>
 			<option value="lenka">Uň (L)</option>
 			<option value="david">Mimi (D)</option>
 			<option value="spolecne">Koťátková rodina</option>
-		</select><br/><br/>
+		</select><br/>
+		
+		<!--ucel-->
+		<select name="ucel" required="required">
+			<option value=""></option>
+			<?php foreach($use as $u) { ?>
+				<option value="<?php echo $u->id; ?>"><?php echo $u->nazev; ?></option>
+			<?php } ?>
+		</select>
+		
+		<!--lokace-->
+		<select name="lokace" required="required">
+			<option value=""></option>
+			<?php foreach($location as $u) { ?>
+				<option value="<?php echo $u->id; ?>"><?php echo $u->nazev; ?></option>
+			<?php } ?>
+		</select><br/>
+		
+		<input type="checkbox" name="rocni" value="1">Patri do rocniho vyuctovani<br/>
+		
+		<br/>
 		<div class="tagy">
 		<?php
 		foreach($categories as $categoryId => $tags)
-		{
+		{?>
+			<div class="block" id="category<?php echo $categoryId; ?>" <?php if ($categoryId == 2) { echo 'style="display:none;"'; } ?>>
+			<?php
 			foreach($tags as $tag)
 			{
 				$aux = $tag->nazev;
 		?>
-				<div style="display: inline-block;"><input type="checkbox" name="tag[]" value="<?php echo $aux;?>"/><?php echo $aux;?></div>
+				<div style="display: inline-block;"><input type="checkbox" name="tag[<?php echo $aux;?>]" value="<?php echo $aux;?>"/><?php echo $aux;?></div>
 		<?php } ?>
-			<br/><br/>
+			</div>
 		<?php } ?>
 		</div>
 		<input type="submit" id="submit" name="submit" value="Add"/>
