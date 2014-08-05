@@ -1,5 +1,25 @@
 <?php
 
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require dirname(__FILE__) . '/index.local.php';
+require dirname(__FILE__) . '/dibi.min.php';
+
+if(!isset($_SERVER['PATH_INFO']) || $_SERVER['PATH_INFO'] == '/')
+{
+	$year = date('Y');
+	$month = date('m');
+	header("Location: ".$baseurl."adder.php/".$year."/".$month);
+	exit();
+}
+
+list($year, $month) = explode('/', ltrim($_SERVER['PATH_INFO'], '/'));
+$firstDayThisMonth = $year."-".$month."-01";
+$firstDayNextMonth  = date('Y-m-d', strtotime('+1 month', strtotime($firstDayThisMonth)));
+
+$months = array("Leden", "Únor", "Březen", "Duben", "Květen", "Červen", "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec");
+
 function set_date()
 {
 	if(isset($_SESSION['date']))
@@ -7,12 +27,6 @@ function set_date()
 	else
 		return date('Y-m-d');
 }
-
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-require dirname(__FILE__) . '/index.local.php';
-require dirname(__FILE__) . '/dibi.min.php';
 
 dibi::connect($dbOptions);
 
@@ -47,8 +61,6 @@ if($submitted)
 
 
 /****************************************** STATISTIKA ***************************************************/
-$firstDayThisMonth = date('Y-m-01');
-$lastDayThisMonth  = date('Y-m-t');
 
 $categories = dibi::query("SELECT `nazev`, `id_kategorie` FROM `tag`")->fetchAssoc('id_kategorie,#');
 $use = dibi::query("SELECT `id`, `nazev` FROM `ucel`")->fetchAssoc('id');
@@ -63,7 +75,7 @@ foreach ($sources as $source)
 		SELECT `ucel`.`nazev` as `nazev`, SUM(`polozka`.`cena`) as `suma` FROM `polozka`
 		JOIN `ucel` ON `polozka`.`ucel` = `ucel`.`id`
 		WHERE `polozka`.`zdroj` = %s", $source, " 
-		AND %d", $firstDayThisMonth, " <= `polozka`.`datum_zakoupeni` AND  `polozka`.`datum_zakoupeni` <= %d", $lastDayThisMonth, "
+		AND %d", $firstDayThisMonth, " <= `polozka`.`datum_zakoupeni` AND  `polozka`.`datum_zakoupeni` < %d", $firstDayNextMonth, "
 		AND `polozka`.`je_rocni` = 0
 		GROUP BY `polozka`.`ucel`")->fetchPairs('nazev', 'suma');
 	$categorizedExpencesYearly[$source] = dibi::query("
@@ -87,8 +99,8 @@ $lastAddedItems = dibi::query("(
 <head>
 	<title>Pridat polozky nakupu</title>
 	<meta charset="utf-8" />
-	<link rel="stylesheet" href="style/style.css">
-	<script type="text/javascript" src="script/cookies.js"></script>
+	<link rel="stylesheet" href="<?php echo $baseurl; ?>style/style.css">
+	<script type="text/javascript" src="<?php echo $baseurl; ?>script/cookies.js"></script>
 	<script type="text/javascript">
 	window.onload = function()
 	{
@@ -132,6 +144,7 @@ $lastAddedItems = dibi::query("(
 	<table>
 		<tr>
 			<td> <<< Předchozí měsíc </td>
+			<td> Aktualně prohlížíte měsíc: <?php echo $months[$month - 1]; ?></td>
 			<td> Další měsíc >>> </td>
 		</tr>
 	</table>
@@ -186,8 +199,7 @@ $lastAddedItems = dibi::query("(
 		</tbody>
 	</table>
 	</div>
-	
-	<form action="adder.php" method="POST">
+	<form action="" method="POST">
 		Datum: <input type="date" id="datum" name="datum" value="<?php echo set_date(); ?>" placeholder="datum nákupu" required="required"/><br/>
 		Položka: <input type="text" id="name" name="name" placeholder="řekni, co se pořídilo" required="required"/><br/>
 		Cena:<br/>
@@ -270,6 +282,6 @@ $lastAddedItems = dibi::query("(
 	</table>
 	</div>
 	
-	<div><a href="statistics.php">Statistika</a></div>
+	<div><a href="<?php echo $baseurl; ?>statistics.php">Statistika</a></div>
 </body>
 </html>

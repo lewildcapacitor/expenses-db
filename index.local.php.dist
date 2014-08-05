@@ -10,3 +10,5 @@ $dbOptions = array(
 	'database' => '',
 	'charset'  => 'utf8',
 );
+
+$baseurl = '/nakupy/';
