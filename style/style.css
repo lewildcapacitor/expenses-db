@@ -54,6 +54,11 @@ table {
 	background-color:#FFCC33;
 }
 
+th, td {
+	padding: 4px;
+	border:5px solid white;
+}
+
 .cell {
 	color:#F8F8F8;
 	padding: 4px;
@@ -62,4 +67,8 @@ table {
 
 .block {
 	padding-bottom: 15px;
+}
+
+.nav {
+	display:block;
 }

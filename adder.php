@@ -18,11 +18,7 @@ dibi::connect($dbOptions);
 
 session_start();
 
-$categories = dibi::query("SELECT `nazev`, `id_kategorie` FROM `tag`")->fetchAssoc('id_kategorie,#');
-$use = dibi::query("SELECT `id`, `nazev` FROM `ucel`")->fetchAssoc('id');
-$location = dibi::query("SELECT `id`, `nazev` FROM `misto`")->fetchAssoc('id');
-
-
+/************************************* ZPRACOVANI NOVE POLOZKY ****************************************/ 
 $submitted = isset($_POST['submit']);
 if($submitted)
 {
@@ -49,67 +45,36 @@ if($submitted)
 	$_SESSION['date'] = $_POST['datum'];
 }
 
-//stat part
+
+/****************************************** STATISTIKA ***************************************************/
 $firstDayThisMonth = date('Y-m-01');
 $lastDayThisMonth  = date('Y-m-t');
 
-$sumsRent = dibi::query("
-	SELECT `polozka`.`zdroj`, SUM(`polozka`.`cena`) AS `suma`
-	FROM `polozka`
-	JOIN `polozka_tag` ON `polozka`.`id` = `polozka_tag`.`polozka`
-	JOIN `tag` ON `polozka_tag`.`tag` = `tag`.`id`
-	WHERE TRUE
-		AND `tag`.`nazev` = 'ubytovani'
-		AND %d", $firstDayThisMonth, " <= `polozka`.`datum_zakoupeni` AND  `polozka`.`datum_zakoupeni` <= %d", $lastDayThisMonth, "
-	GROUP BY `polozka`.`zdroj`
-")->fetchPairs('zdroj', 'suma');
-$sumsExtra = dibi::query("
-	SELECT `polozka`.`zdroj`, SUM(`polozka`.`cena`) AS `suma`
-	FROM `polozka`
-	JOIN `polozka_tag` ON `polozka`.`id` = `polozka_tag`.`polozka`
-	JOIN `tag` ON `polozka_tag`.`tag` = `tag`.`id`
-	WHERE TRUE
-		AND `tag`.`nazev` = 'mimoradne (rocni)'
-		AND %d", $firstDayThisMonth, " <= `polozka`.`datum_zakoupeni` AND  `polozka`.`datum_zakoupeni` <= %d", $lastDayThisMonth, "
-	GROUP BY `polozka`.`zdroj`
-")->fetchPairs('zdroj', 'suma');
-$sums = dibi::query("
-	SELECT `polozka`.`zdroj`, SUM(`polozka`.`cena`) AS `suma`
-	FROM `polozka`
-	WHERE TRUE
-		AND %d", $firstDayThisMonth, " <= `polozka`.`datum_zakoupeni` AND  `polozka`.`datum_zakoupeni` <= %d", $lastDayThisMonth, "
-	GROUP BY `polozka`.`zdroj`
-")->fetchPairs('zdroj', 'suma');
+$categories = dibi::query("SELECT `nazev`, `id_kategorie` FROM `tag`")->fetchAssoc('id_kategorie,#');
+$use = dibi::query("SELECT `id`, `nazev` FROM `ucel`")->fetchAssoc('id');
+$location = dibi::query("SELECT `id`, `nazev` FROM `misto`")->fetchAssoc('id');
 
-
-$limits = array('david' => 5500.00, 'lenka' => 5500.00);
-$sources = array('david', 'lenka');
-
-$totalDays = date('t');
-$elapsedDays = date('j');
-
-$totals = array();
-$lefts  = array();
-$sumsWoExtra    = array();
-$averagesWoRent = array();
-$limitsWoRent   = array();
-$totalsWoRent   = array();
-$expectedTotalsWoRent = array();
-$expectedLeftsWoRent  = array();
+$sources = array('lenka', 'david', 'spolecne');
+$categorizedExpencesMonthly = array();
+$categorizedExpencesYearly = array();
 foreach ($sources as $source)
 {
-	$sumsWoExtra[$source]    = (@$sums[$source] ?: 0) - (@$sumsExtra[$source] ?: 0);
-	$totals[$source]         = (@$sumsWoExtra[$source] ?: 0) + (@$sums['spolecne'] ?: 0) / 2;
-	$totalsWoRent[$source]   = $totals[$source] - (@$sumsRent[$source] ?: 0);
-	$limitsWoRent[$source]   = $limits[$source] - (@$sumsRent[$source] ?: 0);
-	$lefts[$source]          = $limits[$source] - $totals[$source];
-	$averagesWoRent[$source] = $totalsWoRent[$source] / $elapsedDays;
-	$expectedTotalsWoRent[$source] = $averagesWoRent[$source] * $totalDays;
-	$expectedLeftsWoRent[$source]  = $expectedTotalsWoRent[$source] - $totalsWoRent[$source];
+	$categorizedExpencesMonthly[$source] = dibi::query("
+		SELECT `ucel`.`nazev` as `nazev`, SUM(`polozka`.`cena`) as `suma` FROM `polozka`
+		JOIN `ucel` ON `polozka`.`ucel` = `ucel`.`id`
+		WHERE `polozka`.`zdroj` = %s", $source, " 
+		AND %d", $firstDayThisMonth, " <= `polozka`.`datum_zakoupeni` AND  `polozka`.`datum_zakoupeni` <= %d", $lastDayThisMonth, "
+		AND `polozka`.`je_rocni` = 0
+		GROUP BY `polozka`.`ucel`")->fetchPairs('nazev', 'suma');
+	$categorizedExpencesYearly[$source] = dibi::query("
+		SELECT `ucel`.`nazev` as `nazev`, SUM(`polozka`.`cena`) as `suma` FROM `polozka`
+		JOIN `ucel` ON `polozka`.`ucel` = `ucel`.`id`
+		WHERE `polozka`.`zdroj` = %s", $source, " 
+		AND `polozka`.`je_rocni` = 1
+		GROUP BY `polozka`.`ucel`")->fetchPairs('nazev', 'suma');
 }
 
-//last added items
-$limit = 6;
+$limit = count($use);
 $lastAddedItems = dibi::query("(
 	SELECT *
 	FROM `polozka`
@@ -162,49 +127,38 @@ $lastAddedItems = dibi::query("(
 	</script>
 </head>
 <body onload="fillDate();">
+
+	<div class="nav">
+	<table>
+		<tr>
+			<td> <<< Předchozí měsíc </td>
+			<td> Další měsíc >>> </td>
+		</tr>
+	</table>
+	</div>
+	
 	<div>
 	<table>
 		<thead>
-			<tr>
 				<th></th>
 				<th>Lenička</th>
 				<th>Davídek</th>
-			</tr>
+				<th>Společné</th>
 		</thead>
 		<tbody>
-			<tr class="ordinary">
-				<th class="cell">Utraceno celkem</th>
-				<td class="cell money"><?php echo number_format($totals['lenka'], 2, '.', ' ');?></td>
-				<td class="cell money"><?php echo number_format($totals['david'], 2, '.', ' ');?></td>
-			</tr>
-			<tr class="spent">
-				<th class="cell">Utraceno MU</th>
-				<td class="cell money"><?php echo number_format($totalsWoRent['lenka'], 2, '.', ' ');?></td>
-				<td class="cell money"><?php echo number_format($totalsWoRent['david'], 2, '.', ' ');?></td>
-			</tr>
-			<tr class="left">
-				<th class="cell">Zbývá</th>
-				<td class="cell money"><?php echo number_format($lefts['lenka'], 2, '.', ' ');?></td>
-				<td class="cell money"><?php echo number_format($lefts['david'], 2, '.', ' ');?></td>
-			</tr>
-			<tr class="ordinary">
-				<th class="cell">Útrata denně MU</th>
-				<td class="cell money"><?php echo number_format($averagesWoRent['lenka'], 2, '.', ' ');?></td>
-				<td class="cell money"><?php echo number_format($averagesWoRent['david'], 2, '.', ' ');?></td>
-			</tr>
-			<tr class="ordinary">
-				<th class="cell">Očekávané výdaje za tento měsíc MU</th>
-				<td class="cell money"><?php echo number_format($expectedTotalsWoRent['lenka'], 2, '.', ' ');?></td>
-				<td class="cell money"><?php echo number_format($expectedTotalsWoRent['david'], 2, '.', ' ');?></td>
-			</tr>
-			<tr class="ordinary">
-				<th class="cell">Očekávané výdaje do konce měsíce MU</th>
-				<td class="cell money"><?php echo number_format($expectedLeftsWoRent['lenka'], 2, '.', ' ');?></td>
-				<td class="cell money"><?php echo number_format($expectedLeftsWoRent['david'], 2, '.', ' ');?></td>
-			</tr>
+			<?php foreach($use as $u) { ?>
+				<tr>
+				<th><?php echo $u->nazev; ?></th>
+				<?php foreach($sources as $source) { ?>
+					<td><?php echo (@$categorizedExpencesMonthly[$source][$u->nazev] ?: 0); ?></td>
+				<?php } ?>
+				</tr>
+			<?php } ?>
 		</tbody>
 	</table>
 	</div>
+	
+	
 	<div>
 	<table class="lastitems">
 		<thead>
@@ -292,6 +246,29 @@ $lastAddedItems = dibi::query("(
 		</div>
 		<input type="submit" id="submit" name="submit" value="Add"/>
 	</form>
+	
+	
+	Here is gonna be reminder of our horrible spending habits.<br/>
+	<div>
+	<table>
+		<thead>
+				<th></th>
+				<th>Lenička</th>
+				<th>Davídek</th>
+				<th>Společné</th>
+		</thead>
+		<tbody>
+			<?php foreach($use as $u) { ?>
+				<tr>
+				<th><?php echo $u->nazev; ?></th>
+				<?php foreach($sources as $source) { ?>
+					<td><?php echo (@$categorizedExpencesYearly[$source][$u->nazev] ?: 0); ?></td>
+				<?php } ?>
+				</tr>
+			<?php } ?>
+		</tbody>
+	</table>
+	</div>
 	
 	<div><a href="statistics.php">Statistika</a></div>
 </body>
