@@ -102,20 +102,21 @@ $lastAddedItems = dibi::query("(
 	<link rel="stylesheet" href="<?php echo $baseurl; ?>style/style.css">
 	<script type="text/javascript" src="<?php echo $baseurl; ?>script/cookies.js"></script>
 	<script type="text/javascript">
-	window.onload = function()
-	{
+	window.addEventListener('load', function() {
 		var element = document.getElementsByName("ucel")[0];
 		var block = document.getElementById("category2");
-		element.onchange = function(){
-			if(element.selectedIndex == 1){
+		var refreshblock = function() {
+			if (element.selectedIndex == 1){
 				block.style.display = "block";
-			}
-			else {
+			} else {
 				block.style.display = "none";
 			}
 		};
-		element.onchange();
-	}
+		
+		element.addEventListener('change', refreshblock, false);
+		refreshblock();
+	}, false);
+
 	function fillDate() {
 		if(navigator.cookieEnabled) {
 			var lastShoppingDate = readCookie("lastshoppingdate");
@@ -200,8 +201,8 @@ $lastAddedItems = dibi::query("(
 	</table>
 	</div>
 	<form action="" method="POST">
-		Datum: <input type="date" id="datum" name="datum" value="<?php echo set_date(); ?>" placeholder="datum nákupu" required="required"/><br/>
-		Položka: <input type="text" id="name" name="name" placeholder="řekni, co se pořídilo" required="required"/><br/>
+		<label>Datum: <input type="date" id="datum" name="datum" value="<?php echo set_date(); ?>" placeholder="datum nákupu" required="required"/></label><br/>
+		<label>Položka: <input type="text" id="name" name="name" placeholder="řekni, co se pořídilo" required="required"/></label><br/>
 		Cena:<br/>
 		za kus * počet jednotek [jednotka] = celkově<br/>
 		<input type="text" id="peritem" name="peritem" onchange="updateTotal();" placeholder="za kus" required="required" /> x
@@ -238,7 +239,7 @@ $lastAddedItems = dibi::query("(
 			<?php } ?>
 		</select><br/>
 		
-		<input type="checkbox" name="rocni" value="1">Patri do rocniho vyuctovani<br/>
+		<label><input type="checkbox" name="rocni" value="1">Patri do rocniho vyuctovani</label><br/>
 		
 		<br/>
 		<div class="tagy">
@@ -250,13 +251,17 @@ $lastAddedItems = dibi::query("(
 			foreach($tags as $tag)
 			{
 				$aux = $tag->nazev;
-		?>
-				<div style="display: inline-block;"><input type="checkbox" name="tag[<?php echo $aux;?>]" value="<?php echo $aux;?>"/><?php echo $aux;?></div>
-		<?php } ?>
+				?>
+				<div style="display: inline-block;"><label><input type="checkbox" name="tag[<?php echo $aux;?>]" value="<?php echo $aux;?>"/><?php echo $aux;?></label></div>
+				<?php
+			}
+			?>
 			</div>
 		<?php } ?>
 		</div>
-		<input type="submit" id="submit" name="submit" value="Add"/>
+		<div class="block">
+			<input type="submit" id="submit" name="submit" value="Add" />
+		</div>
 	</form>
 	
 	

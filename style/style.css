@@ -67,6 +67,7 @@ th, td {
 
 .block {
 	padding-bottom: 15px;
+	display: block;
 }
 
 .nav {
